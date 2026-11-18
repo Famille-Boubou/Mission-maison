@@ -7,6 +7,7 @@
     return window.MM_NIVEAUX_ARGENT.filter(n => !n.avance || (profil || E.profil).argent_avance);
   };
   function leconsNiveau(nid) { return window.MM_LECONS.filter(l => l.id.indexOf(nid + '-') === 0); }
+  MM.leconsNiveau = leconsNiveau;
   function reussies(nid, enfant) { return leconsNiveau(nid).filter(l => { const a = MM.apprentissage('lecon:' + l.id, enfant); return a && a.reussi; }).length; }
   MM.leconsReussies = function (enfant) { return window.MM_LECONS.filter(l => { const a = MM.apprentissage('lecon:' + l.id, enfant); return a && a.reussi; }).length; };
 
@@ -40,9 +41,9 @@
     h += '<div class="pile" style="margin-top:12px">';
     niveaux.forEach((n, idx) => {
       const lecons = leconsNiveau(n.id), visibles = lecons.filter(l => MM.contenuValide('lecon:' + l.id, l.v));
-      const ok = reussies(n.id), ouvert = precedentOk, bonus = MM.apprentissage('niveau:' + n.id);
+      const ok = reussies(n.id), total = lecons.length, ouvert = precedentOk, bonus = MM.apprentissage('niveau:' + n.id);
       h += '<div class="carte-niveau' + (ouvert ? '' : ' verrou') + '"><div class="ligne entre"><div class="ligne"><span style="font-size:30px">' + (ouvert ? n.emoji : '🔒') + '</span>' +
-        '<div><div class="petit">Niveau ' + (idx + 1) + '</div><strong style="font-size:18px">' + esc(n.nom) + '</strong></div></div><span class="pastille ' + (ok >= 5 ? 'ok' : 'neutre') + '">' + ok + ' / 5</span></div>' +
+        '<div><div class="petit">Niveau ' + (idx + 1) + '</div><strong style="font-size:18px">' + esc(n.nom) + '</strong></div></div><span class="pastille ' + (ok >= total ? 'ok' : 'neutre') + '">' + ok + ' / ' + total + '</span></div>' +
         '<span style="font-size:13px;color:var(--gris)">' + esc(n.texte) + '</span>';
       if (!ouvert) {
         h += '<span class="petit">Termine le niveau précédent pour débloquer celui-ci.</span>';
@@ -56,11 +57,11 @@
         });
         if (visibles.length < lecons.length) h += '<span class="petit">' + (lecons.length - visibles.length) + ' leçon(s) en attente de validation par Papa ou Maman.</span>';
         h += '</div>';
-        if (ok >= 5 && !bonus) h += '<button class="btn btn-orange" data-action="ar-bonus-niveau" data-id="' + n.id + '">🎉 Niveau terminé : récupérer mon bonus (+5)</button>';
+        if (ok >= total && !bonus) h += '<button class="btn btn-orange" data-action="ar-bonus-niveau" data-id="' + n.id + '">🎉 Niveau terminé : récupérer mon bonus (+5)</button>';
         else if (bonus) h += '<span class="petit" style="color:var(--ok);font-weight:600">🏆 Niveau terminé' + (bonus.points ? ' · bonus de ' + bonus.points + ' points reçu' : '') + '</span>';
       }
       h += '</div>';
-      precedentOk = ok >= 5;
+      precedentOk = ok >= total;
     });
     h += '</div>';
     if (!E.profil.argent_avance) h += '<p class="petit" style="margin-top:12px">Les niveaux « Investisseuse » et « Experte » seront débloqués par Papa ou Maman un peu plus tard.</p>';
@@ -87,8 +88,55 @@
   MM.htmlLecon = function (l) {
     return '<div class="carte-fiche"><span style="font-size:40px">' + l.emoji + '</span><h2 style="margin:6px 0 10px;font-size:23px;line-height:1.2">' + esc(l.titre) + '</h2>' +
       l.texte.map(p => '<p style="margin:0 0 10px;font-size:15px;line-height:1.55">' + MM.gras(p) + '</p>').join('') + '</div>' +
+      (l.illus || []).map(htmlIllus).join('') +
       '<div class="carte-jaune pile" style="gap:4px;margin-top:10px"><strong>💡 L\'astuce</strong><span style="font-size:14px;line-height:1.45">' + esc(l.astuce) + '</span></div>';
   };
+
+  /* ----- Illustrations des leçons ----- */
+  function nb(v, dec) {
+    const d = dec == null ? 2 : dec, r = Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
+    return (Number.isInteger(r) ? String(r) : r.toFixed(d)).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+  }
+  function htmlIllus(il) {
+    let h = '<div class="carte illus pile" style="margin-top:10px;gap:10px"><strong style="font-size:15px">' + esc(il.titre || il.nom || '') + '</strong>';
+    if (il.type === 'barres') {
+      h += il.lignes.map(x => {
+        const max = Math.max(x.a, x.b), pc = Math.round((x.b / x.a - 1) * 100);
+        return '<div class="pile" style="gap:4px"><div class="ligne entre"><span style="font-size:13px;font-weight:600">' + esc(x.nom) + '</span>' +
+          '<span class="pastille ' + (pc === 0 ? 'neutre' : (pc > 0) === !il.hausseBonne ? 'moins' : 'ok') + '">' + (pc > 0 ? '+' : '') + pc + ' %</span></div>' +
+          '<div class="barre-illus"><span class="avant" style="width:' + MM.pct(x.a, max) + '%"></span><em>' + esc(x.al) + ' : ' + nb(x.a) + (x.u || ' €') + '</em></div>' +
+          '<div class="barre-illus"><span class="apres" style="width:' + MM.pct(x.b, max) + '%"></span><em>' + esc(x.bl) + ' : ' + nb(x.b) + (x.u || ' €') + '</em></div></div>';
+      }).join('');
+    } else if (il.type === 'escalier') {
+      const max = Math.max.apply(null, il.points.map(p => p[1])), base = il.base || 0, W = 300, H = 150, n = il.points.length, bw = W / n;
+      h += '<svg viewBox="0 0 ' + W + ' ' + (H + 34) + '" style="width:100%;height:auto" role="img" aria-label="' + esc(il.titre) + '">' +
+        il.points.map((p, i) => {
+          const hh = Math.max(3, (H - 18) * (p[1] - base) / (max - base)), x = i * bw + 4, y = H - hh;
+          return '<rect x="' + x + '" y="' + y + '" width="' + (bw - 8) + '" height="' + hh + '" rx="5" fill="' + (i === n - 1 ? '#FF8A00' : '#0B7F3D') + '"/>' +
+            '<text x="' + (x + (bw - 8) / 2) + '" y="' + (y - 4) + '" font-size="11" font-weight="700" text-anchor="middle" fill="#1B1B2F">' + nb(p[1], 1) + '</text>' +
+            '<text x="' + (x + (bw - 8) / 2) + '" y="' + (H + 16) + '" font-size="11" text-anchor="middle" fill="#5F6170">' + esc(p[0]) + '</text>';
+        }).join('') + '</svg><span class="petit" style="margin-top:-6px">En ' + esc(il.unite === '%' ? '% par an' : 'euros') + (base ? ' (l\'échelle commence à ' + base + ')' : '') + '</span>';
+    } else if (il.type === 'paquets') {
+      const pk = (o) => nb(o.prix / (o.poids / 1000)) + ' €/kg';
+      const box = (o, t, c) => '<div class="paquet" style="height:' + Math.round(o.poids / 2.2) + 'px;background:' + c + '"><strong>' + o.poids + ' g</strong><span>' + nb(o.prix) + ' €</span></div>' +
+        '<span class="petit" style="text-align:center">' + t + '<br><strong style="color:var(--encre)">' + pk(o) + '</strong></span>';
+      const hausse = Math.round(((il.apres.prix / il.apres.poids) / (il.avant.prix / il.avant.poids) - 1) * 100);
+      h += '<div class="grille2" style="align-items:end"><div class="pile" style="gap:6px;align-items:center">' + box(il.avant, 'Avant', 'var(--vert-clair)') + '</div>' +
+        '<div class="pile" style="gap:6px;align-items:center">' + box(il.apres, 'Après', 'var(--orange-clair)') + '</div></div>' +
+        '<div class="carte-rouge" style="text-align:center;font-weight:700">Même prix, mais +' + hausse + ' % au kilo !</div>';
+    } else if (il.type === 'marques') {
+      h += '<div class="pile" style="gap:0">' + il.lignes.map(x =>
+        '<div class="ligne-marque"><div style="flex:1;min-width:0"><strong style="font-size:14px">' + esc(x.entreprise) + '</strong><div class="petit">' + esc(x.marques) + '</div></div>' +
+        '<span class="pastille ' + (/non cot/i.test(x.bourse) ? 'neutre' : 'ok') + '" style="white-space:normal;text-align:right;max-width:46%">' + esc(x.bourse) + '</span></div>').join('') + '</div>';
+    } else if (il.type === 'parts') {
+      const max = Math.max.apply(null, il.lignes.map(x => x.val));
+      h += il.lignes.map(x => '<div class="pile" style="gap:3px"><div class="ligne entre"><span style="font-size:13px;font-weight:600">' + esc(x.nom) + '</span><span class="petit" style="font-weight:700;color:var(--encre)">' + nb(x.val, 1) + esc(il.unite || '') + '</span></div>' +
+        '<div class="barre claire"><div style="width:' + MM.pct(x.val, max) + '%"></div></div></div>').join('');
+    }
+    if (il.note) h += '<span class="petit">' + esc(il.note) + '</span>';
+    return h + '</div>';
+  }
+  MM.htmlIllus = htmlIllus;
 
   /* ----- Simulateur ----- */
   function sim() {

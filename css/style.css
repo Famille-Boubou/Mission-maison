@@ -166,3 +166,10 @@ input[type=range].curseur { width: 100%; accent-color: var(--vert); min-height: 
 .btn-icone[disabled] { opacity: .4; }
 .onglets .dedans button { font-size: 10.5px; letter-spacing: -.01em; }
 code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
+.barre-illus { position: relative; height: 22px; border-radius: 6px; background: #F4F1E6; overflow: hidden; }
+.barre-illus span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
+.barre-illus span.avant { background: #CFE9C3; }
+.barre-illus span.apres { background: var(--orange); }
+.barre-illus em { position: relative; font-style: normal; font-size: 12px; font-weight: 600; padding-left: 8px; line-height: 22px; color: var(--encre); }
+.paquet { width: 92px; border-radius: 10px 10px 4px 4px; border: 2px solid var(--encre); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 14px; }
+.ligne-marque { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--bord); }

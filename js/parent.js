@@ -323,7 +323,7 @@
       const vus = (E.avis || []).filter(a => a.enfant_id === p.id).length;
       const fiches = (E.apprentissages || []).filter(a => a.enfant_id === p.id && a.type === 'fiche' && a.reussi).length;
       const res = MM.profilResultat(p.id);
-      const nbNiv = MM.niveauxDispo(p).length * 5;
+      const nbNiv = MM.niveauxDispo(p).reduce((t, n) => t + MM.leconsNiveau(n.id).length, 0);
       return '<div class="carte pile" style="gap:6px"><div class="ligne entre"><strong>' + esc(p.prenom) + '</strong><span class="petit">' + MM.pointsAppliSemaine(p.id) + ' / ' + MM.PLAFOND_APPLI + ' pts cette semaine</span></div>' +
         '<span style="font-size:13px">🧩 Profil : ' + (res ? res.top.map(c => P[c].emoji + ' ' + P[c].nom).join(' + ') : 'quiz pas encore fait') + '</span>' +
         '<span style="font-size:13px">🃏 ' + vus + ' métiers découverts · ' + fiches + ' quiz réussis · 💰 ' + MM.leconsReussies(p.id) + ' / ' + nbNiv + ' leçons</span>' +
