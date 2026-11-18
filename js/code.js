@@ -101,16 +101,22 @@
       '<div class="barre claire" style="margin-bottom:12px"><div style="width:' + MM.pct(c.i + (c.valide ? 1 : 0), NB) + '%"></div></div>';
     h += '<div class="question-carte">' + (q.p ? '<div class="panneau-zone">' + window.MM_PANNEAU(q.p) + '</div>' : '') +
       '<div style="font-size:17px;font-weight:700;line-height:1.35">' + esc(q.q) + '</div><div class="pile">' +
-      q.c.map((txt, i) => {
+      (function () {
+        // ordre des réponses tiré au hasard une fois par question (gardé si on recharge la page)
+        c.ordres = c.ordres || {};
+        if (!c.ordres[c.i] || c.ordres[c.i].length !== q.c.length) { c.ordres[c.i] = melanger(q.c.map((_, k) => k)); sauver(); }
+        return c.ordres[c.i];
+      })().map((i, pos) => {
+        const txt = q.c[i];
         let cls = 'reponse';
         if (c.valide) { if (q.r.includes(i)) cls += ' juste'; else if (sel.includes(i)) cls += ' fausse'; }
         else if (sel.includes(i)) cls += ' choisie';
         return '<button class="' + cls + '" data-action="code-choix" data-i="' + i + '"' + (c.valide ? ' disabled' : '') + ' aria-pressed="' + sel.includes(i) + '">' +
-          '<span class="lettre">' + 'ABCD'[i] + '</span><span>' + esc(txt) + '</span></button>';
+          '<span class="lettre">' + 'ABCD'[pos] + '</span><span>' + esc(txt) + '</span></button>';
       }).join('') + '</div>';
     if (c.valide) {
       h += '<div class="explication ' + (juste ? 'bon' : 'mauvais') + '"><strong>' + (juste ? 'Bonne réponse !' : 'Pas tout à fait.') + '</strong> ' +
-        (juste ? '' : 'La bonne réponse : ' + q.r.map(i => 'ABCD'[i]).join(' et ') + '. ') + esc(q.e) + '</div>' +
+        (juste ? '' : 'La bonne réponse : ' + q.r.map(i => 'ABCD'[c.ordres[c.i].indexOf(i)]).sort().join(' et ') + '. ') + esc(q.e) + '</div>' +
         '<button class="btn btn-vert btn-plein" data-action="code-suivante">' + (c.i + 1 < NB ? 'Question suivante' : 'Voir mon résultat') + '</button>';
     } else {
       h += '<button class="btn btn-vert btn-plein" data-action="code-valider"' + (sel.length ? '' : ' disabled') + '>Valider ma réponse</button>';
@@ -157,7 +163,7 @@
     const c = charger();
     if (!(c.adulte && c.confirme)) return;
     if ((window.MM_QUESTIONS || []).length < NB) { MM.toast('La banque de questions n\'est pas encore complète.', true); return; }
-    Object.assign(c, { phase: 'question', questions: tirer(), i: 0, score: 0, selection: [], valide: false, erreurs: [], resultat: null, enregistre: false, debut: Date.now() });
+    Object.assign(c, { phase: 'question', questions: tirer(), ordres: {}, i: 0, score: 0, selection: [], valide: false, erreurs: [], resultat: null, enregistre: false, debut: Date.now() });
     sauver(); MM.afficher(); window.scrollTo(0, 0);
   };
   MM.actions['code-choix'] = async (b) => {
