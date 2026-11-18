@@ -100,7 +100,7 @@
       '<div style="text-align:right"><div class="sous-titre">Bonnes réponses</div><strong style="font-size:20px">' + c.score + '</strong></div></div>' +
       '<div class="barre claire" style="margin-bottom:12px"><div style="width:' + MM.pct(c.i + (c.valide ? 1 : 0), NB) + '%"></div></div>';
     h += '<div class="question-carte">' + (q.p ? '<div class="panneau-zone">' + window.MM_PANNEAU(q.p) + '</div>' : '') +
-      '<div style="font-size:17px;font-weight:700;line-height:1.35">' + esc(q.q) + '</div><div class="pile">' +
+      '<div style="font-size:17px;font-weight:700;line-height:1.35">' + esc(q.q) + '</div><div class="petit" style="margin:-4px 0 2px">Une ou plusieurs bonnes réponses : coche tout ce qui est juste.</div><div class="pile">' +
       (function () {
         // ordre des réponses tiré au hasard une fois par question (gardé si on recharge la page)
         c.ordres = c.ordres || {};
