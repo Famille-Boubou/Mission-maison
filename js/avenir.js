@@ -30,7 +30,7 @@
     }
     h += '<div class="carte pile" style="gap:6px;margin-top:10px"><strong>🧩 Profils qui s\'y plaisent</strong><span style="font-size:14px">' +
       f.p.split('').map(c => P[c].emoji + ' ' + P[c].nom).join(' · ') + '</span></div>';
-    h += '<p class="petit" style="margin:10px 2px 0">Salaires : ordres de grandeur indicatifs en début de carrière, qui varient selon la région, l\'employeur et l\'expérience.' +
+    h += '<p class="petit" style="margin:10px 2px 0">Salaires : ordres de grandeur en net par mois en début de carrière (sources : Onisep, grilles de la fonction publique, enquêtes 2026). Ils varient selon la région, l\'employeur et le statut.' +
       (f.a ? ' ⭐ : métier qui devrait beaucoup recruter dans les années à venir (projections France Stratégie / Dares) ou secteur en forte croissance.' : '') + '</p>';
     return h;
   };

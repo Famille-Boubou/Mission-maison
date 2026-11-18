@@ -45,7 +45,7 @@
     C: { nom: 'Organisée', emoji: '🗂️', texte: 'Tu aimes l\'ordre, les chiffres, les plans bien rangés, vérifier que tout est juste.' }
   };
 
-  window.MM_NIVEAUX = ['CAP', 'Bac pro', 'Bac+2', 'Bac+3', 'Bac+5', 'Bac+8 et plus'];
+  window.MM_NIVEAUX = ['CAP', 'Bac pro', 'Bac+2', 'Bac+3', 'Bac+5', 'Bac+6 ou 7', 'Bac+8 et plus'];
 
   window.MM_METIERS = window.MM_METIERS || [];
   window.MM_AJOUT_METIERS = function (univers, liste) {
