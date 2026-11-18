@@ -106,7 +106,14 @@
         '<span class="petit">' + esc(T(q.e)) + '</span></div>').join('') + '</div>';
     } else {
       h += MM.htmlFicheMetier(it.objet, { toutVoir: true });
-      h += '<p class="petit">Le quiz de chaque fiche est fabriqué automatiquement à partir de ces informations (tâches, niveau, univers, spécialités ou qualités, salaire).</p>';
+      const ex = (MM._quizExemple = MM._quizExemple || {});
+      if (!ex[it.ref]) ex[it.ref] = MM.quizFiche(it.objet, true);
+      h += '<h2>Exemple de quiz (bonnes réponses en vert)</h2>' +
+        '<p class="petit" style="margin-top:-4px">Le quiz est fabriqué à partir de la fiche : les questions et les mauvaises réponses changent un peu à chaque fois. Lili a une question sur les spécialités de 1re, Romy une question sur les qualités utiles.</p>' +
+        '<div class="pile">' + ex[it.ref].map((q, i) =>
+        '<div class="carte pile" style="gap:6px"><strong style="font-size:14px">' + (i + 1) + '. ' + esc(q.q) + '</strong>' +
+        q.c.map((x, j) => '<span style="font-size:13px;padding:4px 8px;border-radius:8px;' + (j === q.r ? 'background:var(--ok-clair);color:var(--ok);font-weight:700' : '') + '">' + esc(x) + '</span>').join('') +
+        '<span class="petit">' + esc(q.e || '') + '</span></div>').join('') + '</div>';
     }
     h += '<div class="carte pile" style="margin-top:12px;border:2px solid var(--vert)"><label class="champ">Ton commentaire (obligatoire pour « À corriger »)' +
       '<textarea id="ct-commentaire" rows="3" placeholder="Ex. : le salaire de début me paraît trop haut">' + esc(d && d.statut === 'a_corriger' && d.version === it.v ? d.commentaire || '' : '') + '</textarea></label>' +

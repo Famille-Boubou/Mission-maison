@@ -131,7 +131,12 @@
       '<div style="font-family:var(--titre);font-weight:800;font-size:26px;line-height:1.15;margin:14px 0 8px">' + esc(f.n) + '</div>' +
       '<p style="margin:0 0 10px;font-size:15px;line-height:1.5">' + esc(f.r) + '</p>' +
       '<div class="ligne" style="gap:8px;flex-wrap:wrap"><span class="pastille neutre">🎓 ' + esc(f.niv) + '</span></div>' +
-      '<button class="btn btn-contour btn-plein" style="margin-top:14px" data-action="av-fiche" data-id="' + f.id + '">Lire la fiche complète</button></div>';
+      (function () {
+        const q = MM.apprentissage('metier:' + f.id);
+        return q && q.reussi
+          ? '<button class="btn btn-contour btn-plein" style="margin-top:14px" data-action="av-fiche" data-id="' + f.id + '">✅ Quiz réussi · relire la fiche</button>'
+          : '<button class="btn btn-vert btn-plein" style="margin-top:14px" data-action="av-fiche" data-id="' + f.id + '">📖 Lire la fiche et passer le quiz (+1 pt)</button>';
+      })() + '</div>';
     h += '<div class="grille3" style="margin-top:12px">' + AVIS.map(x =>
       '<button class="btn-avis avis-' + x.id + '" data-action="av-avis" data-id="' + f.id + '" data-avis="' + x.id + '" data-suite="1"><span style="font-size:28px">' + x.emoji + '</span>' + x.nom + '</button>').join('') + '</div>' +
       '<p class="petit" style="text-align:center">Donne ton avis pour passer à la carte suivante. Tu pourras changer d\'avis dans ton album.</p>';
@@ -179,13 +184,14 @@
     const av = MM.avis(f.id), q = MM.apprentissage('metier:' + f.id);
     let h = '<div class="ligne" style="margin-bottom:12px"><button class="btn btn-contour btn-petit" data-action="av-retour">← Retour</button></div>';
     h += MM.htmlFicheMetier(f, { lycee: E.profil.lycee });
-    h += '<h2>Ton avis</h2><div class="grille3">' + AVIS.map(x =>
-      '<button class="btn-avis avis-' + x.id + (av === x.id ? ' choisi' : '') + '" data-action="av-avis" data-id="' + f.id + '" data-avis="' + x.id + '"><span style="font-size:26px">' + x.emoji + '</span>' + x.nom + '</button>').join('') + '</div>';
-    h += '<div class="carte pile" style="margin-top:14px">';
+    h += '<div class="carte pile" style="margin-top:14px;border:2px solid var(--vert)">';
     if (q && q.reussi) h += '<strong>✅ Quiz réussi</strong><span class="petit">' + (q.points ? '+' + q.points + ' point gagné' : 'Réussi sans point (déjà tenté ou plafond)') + '</span>';
     else if (q) h += '<strong>Quiz pas encore réussi</strong><span class="petit">Ton premier essai n\'a pas rapporté de point, mais tu peux le réussir pour compléter ton album.</span><button class="btn btn-vert" data-action="av-quiz" data-id="' + f.id + '">Réessayer le quiz</button>';
     else h += '<strong>Quiz de la fiche : +1 point</strong><span class="petit">5 questions sur ce que tu viens de lire. Il faut 4 bonnes réponses, au premier essai, pour gagner le point.</span><button class="btn btn-vert" data-action="av-quiz" data-id="' + f.id + '">Je passe le quiz</button>';
-    return h + '</div>';
+    h += '</div>';
+    h += '<h2>Ton avis</h2><div class="grille3">' + AVIS.map(x =>
+      '<button class="btn-avis avis-' + x.id + (av === x.id ? ' choisi' : '') + '" data-action="av-avis" data-id="' + f.id + '" data-avis="' + x.id + '"><span style="font-size:26px">' + x.emoji + '</span>' + x.nom + '</button>').join('') + '</div>';
+    return h;
   }
 
   /* ----- Mon profil ----- */
