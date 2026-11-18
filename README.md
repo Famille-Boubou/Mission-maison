@@ -23,6 +23,11 @@ Les règles sont celles du « Contrat familial Mission Maison ».
 | `js/questions.js` | Banque de questions du code (questions originales, pas celles de l'examen) |
 | `js/panneaux.js` | Panneaux dessinés |
 | `supabase/schema.sql` | Création de la base et des règles |
+| `supabase/avenir-argent.sql` | Ajout des onglets « Mon avenir » et « Mon argent » (à lancer une fois) |
+| `js/metiers*.js` | Les 200 fiches métiers (20 univers) |
+| `js/argent.js` | Les 20 leçons d'argent, leurs quiz, les défis du mois et le quiz « Mon profil » |
+| `js/apprendre.js`, `js/avenir.js`, `js/monargent.js` | Les écrans « Mon avenir » et « Mon argent » |
+| `js/parent-contenus.js` | Relecture et validation des fiches par les parents |
 
 ## Installer l'appli sur un téléphone
 

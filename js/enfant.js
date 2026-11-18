@@ -14,15 +14,23 @@
 
   MM.vues.enfantOnglets = function () {
     const moi = E.user.id, p = E.profil;
-    const aRefaire = E.realisations.filter(r => r.enfant_id === moi && r.statut === 'reservee' && r.commentaire).length;
+    const aRefaire = (cat) => E.realisations.filter(r => r.enfant_id === moi && r.statut === 'reservee' && r.commentaire &&
+      categorie(E.missions.find(m => m.id === r.mission_id)) === cat).length;
     const bonusDispo = E.bonus.filter(b => b.enfant_id === moi && b.statut === 'disponible').length;
     const recompense = MM.solde(moi) >= MM.TRANCHE ? 1 : 0;
-    const o = [{ id: 'missions', nom: 'Missions', icone: 'maison', rendu: vueMissions, bulle: aRefaire || null }];
+    const o = [{ id: 'missions', nom: 'Missions', icone: 'maison', rendu: vueMissions, bulle: aRefaire('maison') || null }];
     o.push({ id: 'notes', nom: 'Notes', icone: 'livre', rendu: vueNotes, apres: brancherNotes });
     if (p.code_actif && MM.vues.code) o.push({ id: 'code', nom: 'Code', icone: 'voiture', rendu: MM.vues.code, apres: MM.vues.codeApres });
+    if (E.migrationAvenir && MM.vues.avenir) {
+      o.push({ id: 'avenir', nom: 'Avenir', icone: 'boussole', rendu: MM.vues.avenir, bulle: aRefaire('avenir') || null });
+      o.push({ id: 'argent', nom: 'Argent', icone: 'piece', rendu: MM.vues.argent, apres: MM.vues.argentApres, bulle: aRefaire('argent') || null });
+    }
     o.push({ id: 'recompenses', nom: 'Récompenses', icone: 'cadeau', rendu: vueRecompenses, bulle: (bonusDispo + recompense) || null });
     return o;
   };
+
+  function categorie(m) { return (m && m.categorie) || 'maison'; }
+  MM.categorieMission = categorie;
 
   function entete(titre) {
     const p = E.profil;
@@ -51,7 +59,8 @@
       '<span style="font-size:13px">' + (solde >= T ? '🎁 Tu as débloqué une récompense ! Va dans « Récompenses ».' : 'Encore ' + reste + ' points avant ta prochaine récompense') + '</span></div>';
 
     // Mes missions en cours
-    const miennes = E.realisations.filter(r => r.enfant_id === moi && (r.statut === 'reservee' || r.statut === 'envoyee'));
+    const miennes = E.realisations.filter(r => r.enfant_id === moi && (r.statut === 'reservee' || r.statut === 'envoyee') &&
+      categorie(E.missions.find(m => m.id === r.mission_id)) === 'maison');
     if (miennes.length) {
       h += '<h2>Mes missions en cours</h2><div class="pile">';
       miennes.forEach(r => {
@@ -73,7 +82,7 @@
 
     // Missions disponibles
     h += '<h2>Missions disponibles</h2><div class="pile">';
-    const dispo = E.missions.filter(m => m.actif);
+    const dispo = E.missions.filter(m => m.actif && categorie(m) === 'maison');
     if (!dispo.length) h += '<div class="vide">Aucune mission pour l\'instant.</div>';
     dispo.forEach(m => {
       const st = MM.etatMission(m);

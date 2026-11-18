@@ -1,8 +1,9 @@
 /* Service worker minimal : permet d'installer l'appli et garde une copie des fichiers.
    Les données (points, missions…) viennent toujours de la base, jamais du cache. */
-const VERSION = 'mm-v2';
+const VERSION = 'mm-v3';
 const FICHIERS = ['./', 'index.html', 'css/style.css', 'js/config.js', 'js/panneaux.js', 'js/questions.js', 'js/questions2.js',
-  'js/app.js', 'js/enfant.js', 'js/code.js', 'js/parent.js', 'manifest.webmanifest', 'icons/icon-192.png'];
+  'js/metiers-base.js', 'js/metiers1.js', 'js/metiers2.js', 'js/metiers3.js', 'js/metiers4.js', 'js/argent.js',
+  'js/app.js', 'js/enfant.js', 'js/code.js', 'js/apprendre.js', 'js/avenir.js', 'js/monargent.js', 'js/parent-contenus.js', 'js/parent.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FICHIERS)).then(() => self.skipWaiting()));
 });

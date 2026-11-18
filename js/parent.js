@@ -27,6 +27,12 @@
     return E.recompenses.filter(r => !r.remise).length + E.bonus.filter(b => b.statut !== 'disponible' && !b.remis).length;
   }
 
+  function fichesBulle() {
+    const n = MM.contenusEnAttente ? MM.contenusEnAttente() : 0;
+    return n ? (n > 99 ? '99+' : n) : null;
+  }
+  const EMOJI_CAT = { avenir: '🧭 ', argent: '💰 ' };
+
   MM.vues.parentOnglets = function () {
     const idees = E.idees.filter(i => i.statut === 'en_attente').length;
     return [
@@ -34,6 +40,7 @@
       { id: 'retrait', nom: 'Retraits', icone: 'moins', rendu: vueRetrait, apres: brancherRetrait },
       { id: 'remettre', nom: 'À remettre', icone: 'cadeau', rendu: vueRemettre, bulle: aRemettre() || null },
       { id: 'missions', nom: 'Missions', icone: 'liste', rendu: vueMissions, bulle: idees || null },
+      { id: 'contenus', nom: 'Fiches', icone: 'fiche', rendu: MM.vues.contenus, bulle: fichesBulle() },
       { id: 'famille', nom: 'Famille', icone: 'famille', rendu: vueFamille }
     ];
   };
@@ -63,7 +70,7 @@
     if (!rs.length) h += '<div class="vide">Rien à valider pour l\'instant.</div>';
     rs.forEach(r => {
       const m = E.missions.find(x => x.id === r.mission_id) || { titre: 'Mission' };
-      h += carteValidation('mission', r.id, m.titre, MM.profilDe(r.enfant_id).prenom + ' · +' + r.points + ' pts · ' + MM.depuis(r.envoye_at), r.photo_path);
+      h += carteValidation('mission', r.id, (EMOJI_CAT[m.categorie] || '') + m.titre, MM.profilDe(r.enfant_id).prenom + ' · +' + r.points + ' pts · ' + MM.depuis(r.envoye_at), r.photo_path, r.texte);
     });
     h += '</div><h2>Notes (' + ns.length + ')</h2><div class="pile">';
     if (!ns.length) h += '<div class="vide">Aucune note en attente.</div>';
@@ -74,9 +81,10 @@
     });
     return h + '</div>';
   }
-  function carteValidation(type, id, titre, info, photo) {
+  function carteValidation(type, id, titre, info, photo, texte) {
     return '<div class="carte pile"><div><strong>' + esc(titre) + '</strong><div class="petit">' + esc(info) + '</div></div>' +
       (photo ? '<img class="photo-apercu" alt="Photo envoyée" data-photo="' + esc(photo) + '">' : '') +
+      (texte ? '<div class="texte-envoye">' + esc(texte) + '</div>' : '') +
       '<label class="champ">Petit mot (facultatif, surtout en cas de refus)<input type="text" id="mot-' + type + '-' + id + '" placeholder="Ex. : il manque les verres"></label>' +
       '<div class="grille2"><button class="btn btn-contour" data-action="decider" data-type="' + type + '" data-id="' + id + '" data-ok="0">' + MM.icone('croix', 18) + (type === 'mission' ? 'À refaire' : 'Refuser') + '</button>' +
       '<button class="btn btn-vert" data-action="decider" data-type="' + type + '" data-id="' + id + '" data-ok="1">' + MM.icone('check', 18) + 'Valider</button></div></div>';
@@ -212,7 +220,7 @@
     h += '<h2>Liste des missions</h2><div class="pile">';
     E.missions.forEach(m => {
       if (E.editMission === m.id) { h += formMission(m); return; }
-      h += '<div class="mission' + (m.actif ? '' : ' bloquee') + '"><div class="texte"><span class="titre">' + esc(m.titre) + '</span><span class="petit">' + esc(m.limite_texte) + (m.perso ? ' · chacune la sienne' : '') + (m.actif ? '' : ' · désactivée') + '</span></div>' +
+      h += '<div class="mission' + (m.actif ? '' : ' bloquee') + '"><div class="texte"><span class="titre">' + (EMOJI_CAT[m.categorie] || '') + esc(m.titre) + '</span><span class="petit">' + esc(m.limite_texte) + (m.perso ? ' · chacune la sienne' : '') + (m.actif ? '' : ' · désactivée') + '</span></div>' +
         '<span class="pastille points">+' + m.points + '</span><button class="btn btn-clair btn-petit" data-action="edit-mission" data-id="' + m.id + '">Modifier</button></div>';
     });
     h += '</div><div style="margin-top:12px">' + (E.editMission === 'nouvelle' ? formMission({ id: 'nouvelle', titre: '', points: 2, periode: 'semaine', max_par_periode: 1, limite_texte: '', perso: false, actif: true })
@@ -284,7 +292,9 @@
   /* ================= FAMILLE ================= */
   function vueFamille() {
     let h = entete('Famille') + cartesSoldes();
+    if (!E.migrationAvenir && MM.htmlMigrationManquante) h += '<div style="margin-top:12px">' + MM.htmlMigrationManquante() + '</div>';
     h += '<h2>Objectifs communs</h2>' + MM.htmlObjectifs();
+    if (E.migrationAvenir && window.MM_METIERS) h += suiviAvenir();
     h += '<h2>Épargne</h2><div class="pile">' + MM.enfants().map(p => {
       const ep = MM.epargne(p.id);
       return '<div class="mission"><div class="texte"><span class="titre">' + esc(p.prenom) + ' · ' + MM.euros(ep.total) + ' mis de côté</span><span class="petit">Sa part ' + MM.euros(ep.part) + ' · votre ajout ' + MM.euros(ep.abond) + (ep.attente ? ' · ' + MM.euros(ep.attente) + ' à verser' : '') + '</span></div></div>';
@@ -294,7 +304,10 @@
       '<div class="pile" style="gap:2px"><strong>' + esc(p.prenom) + '</strong>' +
       '<label class="case"><input type="checkbox" data-reglage="notes_actives" data-id="' + p.id + '"' + (p.notes_actives ? ' checked' : '') + '>Les notes rapportent des points</label>' +
       '<label class="case"><input type="checkbox" data-reglage="bonus_note_18" data-id="' + p.id + '"' + (p.bonus_note_18 ? ' checked' : '') + '>Bonus de 5 € pour une note de 18 à 19,5</label>' +
-      '<label class="case"><input type="checkbox" data-reglage="code_actif" data-id="' + p.id + '"' + (p.code_actif ? ' checked' : '') + '>Sessions de code de la route</label></div>').join('<hr class="sep">') + '</div>';
+      '<label class="case"><input type="checkbox" data-reglage="code_actif" data-id="' + p.id + '"' + (p.code_actif ? ' checked' : '') + '>Sessions de code de la route</label>' +
+      (E.migrationAvenir ? '<label class="case"><input type="checkbox" data-reglage="lycee" data-id="' + p.id + '"' + (p.lycee ? ' checked' : '') + '>« Mes spécialités » (lycée)</label>' +
+        '<label class="case"><input type="checkbox" data-reglage="argent_avance" data-id="' + p.id + '"' + (p.argent_avance ? ' checked' : '') + '>Niveaux « Investisseuse » et « Experte »</label>' : '') +
+      '</div>').join('<hr class="sep">') + '</div>';
 
     h += '<h2>Dernières activités</h2><div class="pile">' + E.mouvements.slice(0, 25).map(m =>
       '<div class="mission"><div class="texte"><span class="titre">' + esc(MM.profilDe(m.enfant_id).prenom) + ' · ' + esc(m.libelle) + '</span><span class="petit">' + MM.dateCourte(m.created_at) + '</span></div>' +
@@ -302,6 +315,20 @@
       (E.mouvements.length ? '' : '<div class="vide">Rien pour l\'instant.</div>') + '</div>';
     h += '<div style="margin-top:24px"><button class="btn btn-contour btn-plein" data-action="deconnexion">Se déconnecter</button></div>';
     return h;
+  }
+  function suiviAvenir() {
+    const P = window.MM_PROFILS;
+    return '<h2>Avenir & argent</h2><div class="pile">' + MM.enfants().map(p => {
+      const fav = (E.avis || []).filter(a => a.enfant_id === p.id && a.avis === 'adore').map(a => MM.metier(a.metier)).filter(Boolean);
+      const vus = (E.avis || []).filter(a => a.enfant_id === p.id).length;
+      const fiches = (E.apprentissages || []).filter(a => a.enfant_id === p.id && a.type === 'fiche' && a.reussi).length;
+      const res = MM.profilResultat(p.id);
+      const nbNiv = MM.niveauxDispo(p).length * 5;
+      return '<div class="carte pile" style="gap:6px"><div class="ligne entre"><strong>' + esc(p.prenom) + '</strong><span class="petit">' + MM.pointsAppliSemaine(p.id) + ' / ' + MM.PLAFOND_APPLI + ' pts cette semaine</span></div>' +
+        '<span style="font-size:13px">🧩 Profil : ' + (res ? res.top.map(c => P[c].emoji + ' ' + P[c].nom).join(' + ') : 'quiz pas encore fait') + '</span>' +
+        '<span style="font-size:13px">🃏 ' + vus + ' métiers découverts · ' + fiches + ' quiz réussis · 💰 ' + MM.leconsReussies(p.id) + ' / ' + nbNiv + ' leçons</span>' +
+        (fav.length ? '<span style="font-size:13px">😍 Coups de cœur : ' + fav.slice(0, 8).map(f => esc(f.n)).join(', ') + (fav.length > 8 ? '…' : '') + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
   }
   document.addEventListener('change', async (e) => {
     const c = e.target.closest('[data-reglage]');

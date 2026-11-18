@@ -67,6 +67,9 @@
       moins: '<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>',
       liste: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
       famille: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+      boussole: '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+      piece: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2.5 0 0 1 9.5 15"/><line x1="12" y1="6" x2="12" y2="7.5"/><line x1="12" y1="16.5" x2="12" y2="18"/>',
+      fiche: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/>',
       etoile: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
       plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
       sortie: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
@@ -209,6 +212,19 @@
       sessions: se.data, bonus: bo.data, recompenses: rc.data, sorties: so.data, idees: id.data, alertes: al.data
     });
     MM.etat.profil = MM.etat.profils.find(p => p.id === MM.etat.user.id) || null;
+
+    // « Mon avenir » et « Mon argent » : tables ajoutées par le script avenir-argent.sql.
+    // Si le script n'a pas encore été lancé, l'appli continue de fonctionner sans ces onglets.
+    const [cv, av, ap, ob] = await Promise.all([
+      q('contenus_valides').select('*'),
+      q('avis_metiers').select('*'),
+      q('apprentissages').select('*').order('created_at', { ascending: false }),
+      q('objectifs_achat').select('*')
+    ]);
+    MM.etat.migrationAvenir = ![cv, av, ap, ob].some(r => r.error);
+    Object.assign(MM.etat, {
+      contenus: cv.data || [], avis: av.data || [], apprentissages: ap.data || [], objectifs: ob.data || []
+    });
   };
 
   MM.rafraichir = async function () {

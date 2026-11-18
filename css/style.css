@@ -141,3 +141,28 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--jaune); bor
 
 .vide { text-align: center; color: var(--gris); font-size: 14px; padding: 16px; background: #fff; border-radius: 14px; }
 hr.sep { border: 0; border-top: 1px solid var(--bord); margin: 6px 0; }
+
+/* Mon avenir & Mon argent */
+.choix.defile { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px; scrollbar-width: none; }
+.choix.defile::-webkit-scrollbar { display: none; }
+.choix.defile .puce { flex-shrink: 0; }
+.carte-fiche { background: #fff; border-radius: 20px; padding: 16px; border-top: 6px solid var(--vert); }
+.carte-swipe { background: #fff; border-radius: 22px; padding: 18px; box-shadow: 0 6px 0 var(--jaune); border: 2px solid var(--encre); }
+.univers-pastille { display: inline-flex; align-items: center; gap: 4px; background: var(--vert-clair); color: var(--vert-fonce); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; }
+.pastille.avenir { background: var(--jaune); color: var(--encre); }
+.liste-puces { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.4; }
+.btn-avis { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 76px; border-radius: 16px; border: 2px solid var(--bord); background: #fff; font-weight: 700; font-size: 13px; }
+.btn-avis.avis-adore { border-color: #F5B700; }
+.btn-avis.avis-adore.choisi, .btn-avis.avis-adore:active { background: var(--jaune); }
+.btn-avis.avis-bof.choisi, .btn-avis.avis-bof:active { background: var(--bord); border-color: var(--gris); }
+.btn-avis.avis-non.choisi, .btn-avis.avis-non:active { background: var(--rouge-clair); border-color: var(--rouge); }
+.univers-tete { width: 100%; border: 0; background: #fff; padding: 14px; text-align: left; }
+.ligne-metier { width: 100%; display: flex; align-items: center; gap: 10px; border: 0; border-top: 1px solid var(--bord); background: #fff; padding: 12px 14px; font-size: 14px; min-height: 48px; }
+.ligne-lecon { width: 100%; display: flex; align-items: center; gap: 10px; border: 2px solid var(--bord); border-radius: 12px; background: #fff; padding: 8px 12px; font-size: 14px; min-height: 48px; }
+.carte-niveau { background: #fff; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 10px; border: 2px solid var(--vert-clair); }
+.carte-niveau.verrou { opacity: .6; border-style: dashed; }
+input[type=range].curseur { width: 100%; accent-color: var(--vert); min-height: 32px; }
+.texte-envoye { white-space: pre-wrap; background: var(--fond); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.45; }
+.btn-icone[disabled] { opacity: .4; }
+.onglets .dedans button { font-size: 10.5px; letter-spacing: -.01em; }
+code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 4px; font-size: 12px; }
