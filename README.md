@@ -25,7 +25,8 @@ Les règles sont celles du « Contrat familial Mission Maison ».
 | `supabase/schema.sql` | Création de la base et des règles |
 | `supabase/avenir-argent.sql` | Ajout des onglets « Mon avenir » et « Mon argent » (à lancer une fois) |
 | `js/metiers*.js` | Les 200 fiches métiers (20 univers) |
-| `js/argent.js` | Les 20 leçons d'argent, leurs quiz, les défis du mois et le quiz « Mon profil » |
+| `js/argent.js` | Les leçons d'argent, leurs quiz, les défis du mois et le quiz « Mon profil » |
+| `js/argent-temps.js` | Le niveau « Le temps, mon super-pouvoir » : 5 leçons avec les simulations personnalisées de Lili et Romy |
 | `js/apprendre.js`, `js/avenir.js`, `js/monargent.js` | Les écrans « Mon avenir » et « Mon argent » |
 | `js/parent-contenus.js` | Relecture et validation des fiches par les parents |
 

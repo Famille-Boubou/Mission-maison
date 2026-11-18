@@ -94,11 +94,16 @@
       (st === 'valide' ? '✅ Validée' : st === 'corriger' ? '✏️ À corriger' : '⏳ À relire') + '</span>' +
       (d && d.version !== it.v ? '<span class="petit">Texte corrigé depuis ta dernière lecture</span>' : '') + '</div>';
     if (c.type === 'lecon') {
-      h += MM.htmlLecon(it.objet);
-      h += '<h2>Le quiz (bonnes réponses en vert)</h2><div class="pile">' + it.objet.quiz.map((q, i) =>
-        '<div class="carte pile" style="gap:6px"><strong style="font-size:14px">' + (i + 1) + '. ' + esc(q.q) + '</strong>' +
-        q.c.map((x, j) => '<span style="font-size:13px;padding:4px 8px;border-radius:8px;' + (j === q.r ? 'background:var(--ok-clair);color:var(--ok);font-weight:700' : '') + '">' + esc(x) + '</span>').join('') +
-        '<span class="petit">' + esc(q.e) + '</span></div>').join('') + '</div>';
+      const lo = it.objet, cx = lo.perso ? MM.ctxPlan(window.MM_PLAN.exemple) : null, T = (x) => cx ? MM.tpl(x, cx) : x;
+      if (cx) h += '<div class="carte-jaune petit" style="margin-bottom:8px;color:var(--encre)">Leçon personnalisée : chaque fille voit ses propres chiffres. Ci-dessous, la version de ' + esc(cx.prenom) + '.</div>';
+      h += MM.htmlLecon(lo, cx);
+      if (cx) Object.keys(window.MM_PLAN.ages).filter(p => p !== cx.prenom).forEach(p => {
+        h += '<details class="carte" style="margin-top:10px"><summary style="font-weight:700;cursor:pointer">Voir la version de ' + esc(p) + '</summary>' + MM.htmlLecon(lo, MM.ctxPlan(p)) + '</details>';
+      });
+      h += '<h2>Le quiz (bonnes réponses en vert)</h2><div class="pile">' + lo.quiz.map((q, i) =>
+        '<div class="carte pile" style="gap:6px"><strong style="font-size:14px">' + (i + 1) + '. ' + esc(T(q.q)) + '</strong>' +
+        q.c.map((x, j) => '<span style="font-size:13px;padding:4px 8px;border-radius:8px;' + (j === q.r ? 'background:var(--ok-clair);color:var(--ok);font-weight:700' : '') + '">' + esc(T(x)) + '</span>').join('') +
+        '<span class="petit">' + esc(T(q.e)) + '</span></div>').join('') + '</div>';
     } else {
       h += MM.htmlFicheMetier(it.objet, { toutVoir: true });
       h += '<p class="petit">Le quiz de chaque fiche est fabriqué automatiquement à partir de ces informations (tâches, niveau, univers, spécialités ou qualités, salaire).</p>';

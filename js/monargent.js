@@ -85,21 +85,98 @@
     return h + '</div>';
   }
   // Rendu d'une leçon (utilisé aussi par l'espace parents)
-  MM.htmlLecon = function (l) {
+  MM.htmlLecon = function (l, cx) {
+    const c = l.perso ? (cx || MM.ctxPlan()) : null, T = (x) => c ? MM.tpl(x, c) : x;
     return '<div class="carte-fiche"><span style="font-size:40px">' + l.emoji + '</span><h2 style="margin:6px 0 10px;font-size:23px;line-height:1.2">' + esc(l.titre) + '</h2>' +
-      l.texte.map(p => '<p style="margin:0 0 10px;font-size:15px;line-height:1.55">' + MM.gras(p) + '</p>').join('') + '</div>' +
-      (l.illus || []).map(htmlIllus).join('') +
-      '<div class="carte-jaune pile" style="gap:4px;margin-top:10px"><strong>💡 L\'astuce</strong><span style="font-size:14px;line-height:1.45">' + esc(l.astuce) + '</span></div>';
+      l.texte.map(p => '<p style="margin:0 0 10px;font-size:15px;line-height:1.55">' + MM.gras(T(p)) + '</p>').join('') + '</div>' +
+      (l.illus || []).map(il => htmlIllus(il, c)).join('') +
+      '<div class="carte-jaune pile" style="gap:4px;margin-top:10px"><strong>💡 L\'astuce</strong><span style="font-size:14px;line-height:1.45">' + esc(T(l.astuce)) + '</span></div>';
   };
+
+  /* ----- Plan personnalisé (niveau « Le temps, mon super-pouvoir ») ----- */
+  function valeurPlan(r, annees, init, mois) {
+    const mr = Math.pow(1 + r, 1 / 12) - 1; let x = init;
+    for (let i = 0; i < Math.round(annees * 12); i++) x = x * (1 + mr) + mois;
+    return x;
+  }
+  function euros(v) { return nb(v >= 1000 ? Math.round(v / 10) * 10 : Math.round(v), 0) + ' €'; }
+  MM.valeurPlan = valeurPlan;
+  // Chiffres de la fille connectée (ou de l'exemple pour l'espace parents)
+  MM.ctxPlan = function (prenom) {
+    const P = window.MM_PLAN;
+    if (!prenom && E.profil && E.profil.role === 'enfant') prenom = E.profil.prenom;
+    if (!prenom || P.ages[prenom] == null) prenom = P.exemple;
+    const age = P.ages[prenom], c = { prenom, age: String(age), agep: String(P.ageParent), ecart: String(P.ageParent - age), ans60: String(60 - age), _age: age };
+    P.jalons.forEach(a => {
+      [5, 7, 9].forEach(t => { c['v' + a + '_' + t] = euros(valeurPlan(t / 100, a - age, P.initial, P.mensuel)); });
+      c['verse' + a] = euros(P.initial + P.mensuel * 12 * (a - age));
+    });
+    const mr = Math.pow(1.07, 1 / 12) - 1, n = (60 - P.ageParent) * 12, g = Math.pow(1 + mr, n);
+    const V = valeurPlan(0.07, 60 - age, P.initial, P.mensuel), m = Math.round((V - P.initial * g) / ((g - 1) / mr));
+    Object.assign(c, { parentMois: nb(m, 0) + ' €', parentFois: String(Math.round(m / P.mensuel)), parentV60: euros(valeurPlan(0.07, 60 - P.ageParent, P.initial, P.mensuel)),
+      parentVerse: euros(P.initial + m * n), _V60: V, _parentV60: valeurPlan(0.07, 60 - P.ageParent, P.initial, P.mensuel), _verse60: P.initial + P.mensuel * 12 * (60 - age), _parentVerse: P.initial + m * n });
+    return c;
+  };
+  MM.tpl = function (s, c) { return String(s).replace(/\{(\w+)\}/g, (m, k) => (c[k] != null ? c[k] : m)); };
 
   /* ----- Illustrations des leçons ----- */
   function nb(v, dec) {
     const d = dec == null ? 2 : dec, r = Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
     return (Number.isInteger(r) ? String(r) : r.toFixed(d)).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
   }
-  function htmlIllus(il) {
+  function htmlIllus(il, c) {
     let h = '<div class="carte illus pile" style="margin-top:10px;gap:10px"><strong style="font-size:15px">' + esc(il.titre || il.nom || '') + '</strong>';
-    if (il.type === 'barres') {
+    if (il.type.indexOf('plan-') === 0) c = c || MM.ctxPlan();
+    if (il.type === 'plan-tableau') {
+      const P = window.MM_PLAN, ages = P.jalons.filter(a => a > c._age);
+      h += '<div class="tableau-plan"><div class="tp-ligne tp-tete"><span>Âge</span><span>Versé</span><span>5 %</span><span>7 %</span><span>9 %</span></div>' +
+        ages.map(a => '<div class="tp-ligne' + (a === 60 ? ' tp-fin' : '') + '"><span>' + a + ' ans</span><span>' + c['verse' + a] + '</span><span>' + c['v' + a + '_5'] + '</span><span><strong>' + c['v' + a + '_7'] + '</strong></span><span>' + c['v' + a + '_9'] + '</span></div>').join('') +
+        '</div><span class="petit">Prudent 5 % · <strong style="color:var(--encre)">central 7 %</strong> · favorable 9 % par an. Montants arrondis.</span>';
+    } else if (il.type === 'plan-courbe') {
+      const P = window.MM_PLAN, a0 = c._age, ans = 60 - a0, W = 320, H = 170, G = 44, D = 8, top = 10;
+      const series = [
+        { nom: 'Versé', coul: '#9A9CA8', f: (y) => P.initial + P.mensuel * 12 * y, pointille: true },
+        { nom: '5 %', coul: '#7BC47F', f: (y) => valeurPlan(0.05, y, P.initial, P.mensuel) },
+        { nom: '7 %', coul: '#0B7F3D', f: (y) => valeurPlan(0.07, y, P.initial, P.mensuel), epais: true },
+        { nom: '9 %', coul: '#FF8A00', f: (y) => valeurPlan(0.09, y, P.initial, P.mensuel) }
+      ];
+      const max = series[3].f(ans), X = (y) => G + (W - G - D) * y / ans, Y = (v) => top + (H - top) * (1 - v / max);
+      let svg = '<svg viewBox="0 0 ' + W + ' ' + (H + 26) + '" style="width:100%;height:auto" role="img" aria-label="' + esc(il.titre) + '">';
+      [0, 0.25, 0.5, 0.75, 1].forEach(k => {
+        const v = max * k, y = Y(v);
+        svg += '<line x1="' + G + '" x2="' + (W - D) + '" y1="' + y + '" y2="' + y + '" stroke="#E6E6EE" stroke-width="1"/>' +
+          '<text x="' + (G - 5) + '" y="' + (y + 4) + '" font-size="10" text-anchor="end" fill="#5F6170">' + (v >= 1000 ? nb(Math.round(v / 1000), 0) + ' k€' : '0') + '</text>';
+      });
+      [a0].concat(P.jalons.filter(a => a >= a0 + 5 && a !== 18)).forEach(a => {
+        svg += '<text x="' + X(a - a0) + '" y="' + (H + 16) + '" font-size="10" text-anchor="middle" fill="#5F6170">' + a + '</text>';
+      });
+      series.forEach(s => {
+        const pts = []; for (let y = 0; y <= ans; y++) pts.push(X(y).toFixed(1) + ',' + Y(s.f(y)).toFixed(1));
+        svg += '<polyline fill="none" stroke="' + s.coul + '" stroke-width="' + (s.epais ? 3.5 : 2) + '"' + (s.pointille ? ' stroke-dasharray="5 4"' : '') + ' stroke-linejoin="round" points="' + pts.join(' ') + '"/>';
+      });
+      svg += '</svg>';
+      h += svg + '<span class="petit" style="margin-top:-8px;text-align:center">Âge de ' + esc(c.prenom) + '</span>' +
+        '<div class="legende-plan">' + series.map(s => '<span><i style="background:' + s.coul + '"></i>' + s.nom + ' : <strong>' + euros(s.f(ans)) + '</strong></span>').join('') + '</div>' +
+        '<span class="petit">Valeurs à 60 ans. La ligne grise, c\'est l\'argent versé : tout l\'écart au-dessus, ce sont les gains.</span>';
+    } else if (il.type === 'plan-parent') {
+      const P = window.MM_PLAN, max = c._V60;
+      const barre = (titre, sous, v, coul) => '<div class="pile" style="gap:4px"><div class="ligne entre"><span style="font-size:13px;font-weight:600">' + titre + '</span><strong style="font-size:14px">' + euros(v) + '</strong></div>' +
+        '<div class="barre claire"><div style="width:' + Math.max(2, MM.pct(v, max)) + '%;background:' + coul + '"></div></div><span class="petit">' + sous + '</span></div>';
+      h += barre('🧒 ' + esc(c.prenom) + ', ' + c.age + ' ans', '10 € par mois jusqu\'à 60 ans · ' + c.verse60 + ' versés', c._V60, 'var(--vert)') +
+        barre('🧑 Papa ou Maman, ' + c.agep + ' ans', '10 € par mois jusqu\'à 60 ans · ' + euros(P.initial + P.mensuel * 12 * (60 - P.ageParent)) + ' versés', c._parentV60, '#9A9CA8') +
+        barre('🧑 Papa ou Maman pour te rattraper', c.parentMois + ' par mois jusqu\'à 60 ans · ' + c.parentVerse + ' versés', c._V60, 'var(--orange)') +
+        '<div class="carte-jaune" style="text-align:center;font-weight:700;font-size:14px">' + c.ecart + ' ans d\'avance = ' + c.parentFois + ' fois moins d\'effort pour le même résultat</div>' +
+        '<span class="petit">Scénario central : 7 % par an, avant frais et impôts.</span>';
+    } else if (il.type === 'fourchette') {
+      const lo = Math.min.apply(null, il.lignes.map(x => x.min)), hi = Math.max.apply(null, il.lignes.map(x => x.max)), P = (v) => (v - lo) / (hi - lo) * 100;
+      h += il.lignes.map(x => '<div class="pile" style="gap:3px"><div class="ligne entre"><strong style="font-size:13px">Sur ' + esc(x.nom) + '</strong>' +
+        '<span class="petit">pire <strong style="color:' + (x.min < 0 ? 'var(--rouge)' : 'var(--ok)') + '">' + (x.min > 0 ? '+' : '') + nb(x.min, 1) + ' %</strong> · moy. ' + nb(x.moy, 1) + ' % · meilleur +' + nb(x.max, 1) + ' %</span></div>' +
+        '<div class="fourchette"><span class="zero" style="left:' + P(0) + '%"></span>' +
+        (x.min < 0 ? '<span class="zone risque" style="left:' + P(x.min) + '%;width:' + (P(0) - P(x.min)) + '%"></span>' : '') +
+        '<span class="zone" style="left:' + P(Math.max(0, x.min)) + '%;width:' + (P(x.max) - P(Math.max(0, x.min))) + '%"></span>' +
+        '<span class="moy" style="left:' + P(x.moy) + '%"></span></div></div>').join('') +
+        '<span class="petit">La barre va du pire au meilleur résultat ; le point, c\'est la moyenne ; le trait, c\'est zéro.</span>';
+    } else if (il.type === 'barres') {
       h += il.lignes.map(x => {
         const max = Math.max(x.a, x.b), pc = Math.round((x.b / x.a - 1) * 100);
         return '<div class="pile" style="gap:4px"><div class="ligne entre"><span style="font-size:13px;font-weight:600">' + esc(x.nom) + '</span>' +
@@ -308,7 +385,8 @@
   MM.actions['ar-retour'] = async () => { AR().lecon = null; MM.afficher(); window.scrollTo(0, 0); };
   MM.actions['ar-quiz'] = async (b) => {
     const l = window.MM_LECONS.find(x => x.id === b.dataset.id);
-    const questions = l.quiz.map(q => { const c = MM.melanger(q.c); return { q: q.q, c, r: c.indexOf(q.c[q.r]), e: q.e }; });
+    const cx = l.perso ? MM.ctxPlan() : null, T = (x) => cx ? MM.tpl(x, cx) : x;
+    const questions = l.quiz.map(q => { const cs = q.c.map(T), c = MM.melanger(cs); return { q: T(q.q), c, r: c.indexOf(cs[q.r]), e: T(q.e) }; });
     MM.lancerQuiz('Quiz · ' + l.titre, questions, async (score, total) => {
       await MM.envoyerQuiz('lecon', 'lecon:' + l.id, score, total, 'Leçon d\'argent : ' + l.titre);
     });

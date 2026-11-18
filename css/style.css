@@ -173,3 +173,18 @@ code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 4px; font-s
 .barre-illus em { position: relative; font-style: normal; font-size: 12px; font-weight: 600; padding-left: 8px; line-height: 22px; color: var(--encre); }
 .paquet { width: 92px; border-radius: 10px 10px 4px 4px; border: 2px solid var(--encre); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 14px; }
 .ligne-marque { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--bord); }
+
+/* Niveau « Le temps, mon super-pouvoir » */
+.tableau-plan { display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; border: 1px solid #E6E6EE; }
+.tp-ligne { display: grid; grid-template-columns: 0.8fr 1fr 1fr 1.1fr 1fr; gap: 4px; padding: 7px 8px; font-size: 12.5px; text-align: right; }
+.tp-ligne span:first-child { text-align: left; font-weight: 600; }
+.tp-ligne:nth-child(even) { background: #F7F7FA; }
+.tp-tete { background: var(--vert) !important; color: #fff; font-weight: 700; }
+.tp-fin { background: #FFF4E5 !important; }
+.legende-plan { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12.5px; justify-content: center; }
+.legende-plan i { display: inline-block; width: 12px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.fourchette { position: relative; height: 16px; background: #F1F1F5; border-radius: 8px; }
+.fourchette .zone { position: absolute; top: 3px; bottom: 3px; border-radius: 5px; background: linear-gradient(90deg, #7BC47F, var(--vert)); }
+.fourchette .zone.risque { background: linear-gradient(90deg, #DC2626, #FCA5A5); border-radius: 5px 0 0 5px; }
+.fourchette .zero { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--encre); opacity: .55; }
+.fourchette .moy { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; border: 3px solid var(--encre); }
